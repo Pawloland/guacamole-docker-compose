@@ -4,3 +4,5 @@ nginx/ssl/
 init/initdb.sql
 drive/
 record/
+nginx/allowlist.conf
+allowlist_database.txt
