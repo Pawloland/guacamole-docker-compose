@@ -35,10 +35,10 @@ cd guacamole-docker-compose
 Your guacamole server will be available at `https://127.0.0.1:8443/` and also under `https://your-ts-dev-name.your-tailnet-name.ts.net/`. The default username is `guacadmin` with password `guacadmin`.
 
 To edit IP address allowlist that will be able to access the website from the internet exposed 
-though tailscale funnel please use `ip_manage.sh` script. It will create file `database` based on which nginx
+though tailscale funnel please use `ip_manage.sh` script. It will create file `allowlist_database.txt` based on which nginx
 config file is generated. To update rules without restarting container please select option `S - Save & Apply changes` and then you can check the current nginx config with option `C - Show running ngnix config`.
 Please do not edit `allowlist.conf` file diretly as it will be overwritten by `ip_manage.sh` script.
-Only use script to manage IP allowlist or edit `database` file directly if you are sure about the syntax.
+Only use script to manage IP allowlist or edit `allowlist_database.txt` file directly if you are sure about the syntax.
 If docker container is not running the `S - Save & Apply changes` option will just update `allowlist.conf` file,
 and inform you that container is not running. The config will be automatically applied when the container is started next time.
 
@@ -75,7 +75,6 @@ The following part of docker-compose.yml will create an instance of PostgreSQL u
     container_name: postgres_${COMPOSE_PROJECT_NAME}
     image: postgres:xxx
     environment:
-      PGDATA: /var/lib/postgresql/data/guacamole
       POSTGRES_DB: guacamole_db
       POSTGRES_PASSWORD: 'ChooseYourOwnPasswordHere1234'
       POSTGRES_USER: guacamole_user
@@ -83,12 +82,12 @@ The following part of docker-compose.yml will create an instance of PostgreSQL u
       - network_guacamole_compose
     volumes:
       - ./init:/docker-entrypoint-initdb.d:ro
-      - ./data:/var/lib/postgresql/data:rw
+      - ./data:/var/lib/postgresql/18/docker:rw
     restart: always
 ...
 ~~~
 
-#### guacd
+#### Guacd
 The following part of docker-compose.yml will create the guacd service. guacd is the heart of Guacamole which dynamically loads support for remote desktop protocols (called "client plugins") and connects them to remote desktops based on instructions received from the web application. The container will be called `guacd_guacamole_compose` based on the docker image `guacamole/guacd` connected to our previously created network `guacnetwork_compose`. Additionally we map the 2 local folders `./drive` and `./record` into the container. We can use them later to map user drives and store recordings of sessions.
 
 ~~~python
