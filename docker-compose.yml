@@ -1,9 +1,5 @@
 name: guacamole_compose
 
-networks:
-  network_guacamole_compose:
-    driver: bridge
-
 services:
   postgres:
     container_name: postgres_${COMPOSE_PROJECT_NAME}
@@ -12,8 +8,6 @@ services:
       POSTGRES_DB: guacamole_db
       POSTGRES_PASSWORD: 'ChooseYourOwnPasswordHere1234'
       POSTGRES_USER: guacamole_user
-    networks:
-      - network_guacamole_compose
     volumes:
       - ./init:/docker-entrypoint-initdb.d:ro
       - ./data:/var/lib/postgresql/18/docker:rw
@@ -24,8 +18,6 @@ services:
   guacd:
     container_name: guacd_${COMPOSE_PROJECT_NAME}
     image: guacamole/guacd:1.6.0
-    networks:
-      - network_guacamole_compose
     volumes:
       - ./drive:/drive:rw
       - ./record:/record:rw
@@ -53,8 +45,6 @@ services:
       POSTGRESQL_PASSWORD: 'ChooseYourOwnPasswordHere1234'
       POSTGRESQL_USERNAME: guacamole_user
       RECORDING_SEARCH_PATH: /record
-    networks:
-      - network_guacamole_compose
     volumes:
       - ./record:/record:rw
     group_add:
@@ -68,9 +58,6 @@ services:
   nginx:
     container_name: nginx_guacamole_compose
     image: nginx:1.29.3-alpine3.22
-
-    networks:
-      - network_guacamole_compose
     ports:
       # Bind to specific IP addresses (network interfaces) instead of all interfaces by default.
       # Binding to 0.0.0.0 by default can be risky because we can't ensure that all interfaces

@@ -56,14 +56,7 @@ name: guacamole_compose
 ~~~
 
 ### Networking
-The following part of docker-compose.yml will create a network with name `network_guacamole_compose` in mode `bridged`.
-~~~python
-...
-networks:
-  network_guacamole_compose:
-    driver: bridge
-...
-~~~
+The implicitly created deafult `guacamole_compose_default` docker bridge network is used.
 
 ### Services
 #### PostgreSQL
@@ -78,8 +71,6 @@ The following part of docker-compose.yml will create an instance of PostgreSQL u
       POSTGRES_DB: guacamole_db
       POSTGRES_PASSWORD: 'ChooseYourOwnPasswordHere1234'
       POSTGRES_USER: guacamole_user
-    networks:
-      - network_guacamole_compose
     volumes:
       - ./init:/docker-entrypoint-initdb.d:ro
       - ./data:/var/lib/postgresql/18/docker:rw
@@ -95,8 +86,6 @@ The following part of docker-compose.yml will create the guacd service. guacd is
   guacd:
     container_name: guacd_${COMPOSE_PROJECT_NAME}
     image: guacamole/guacd:xxx
-    networks:
-      - network_guacamole_compose
     volumes:
       - ./drive:/drive:rw
       - ./record:/record:rw
@@ -122,8 +111,6 @@ The following part of docker-compose.yml will create an instance of guacamole by
       POSTGRESQL_PASSWORD: 'ChooseYourOwnPasswordHere1234'
       POSTGRESQL_USERNAME: guacamole_user
       RECORDING_SEARCH_PATH: /record
-    networks:
-      - network_guacamole_compose
     volumes:
       - ./record:/record:rw
     group_add:
@@ -142,9 +129,6 @@ The following part of docker-compose.yml will create an instance of nginx that m
   nginx:
     container_name: nginx_guacamole_compose
     image: nginx:xxx
-
-    networks:
-      - network_guacamole_compose
     ports:
       # Bind to specific IP addresses (network interfaces) instead of all interfaces by default.
       # Binding to 0.0.0.0 by default can be risky because we can't ensure that all interfaces
