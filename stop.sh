@@ -8,5 +8,6 @@ echo "Stopping Tailscale funnel"
 tailscale funnel --bg https+insecure://127.0.0.1:8443 off 2>/dev/null
 echo "done"
 echo "Stopping Docker containers"
+docker compose -f "$DOCKER_COMPOSE_FILE" stop cloudflared
 docker compose -f "$DOCKER_COMPOSE_FILE" stop
 echo "done"

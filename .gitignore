@@ -6,4 +6,4 @@ drive/
 record/
 nginx/allowlist.conf
 allowlist_database.txt
-cloudflared/tunnel_url.txt
+cloudflared/cloudflare_redirect.conf

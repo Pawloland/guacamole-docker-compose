@@ -96,16 +96,28 @@ services:
       - ./nginx/ssl/self.cert:/etc/nginx/ssl/self.cert:ro
       - ./nginx/ssl/self-ssl.key:/etc/nginx/ssl/self-ssl.key:ro
       - ./nginx/allowlist.conf:/etc/nginx/allowlist.conf:ro
+      - ./cloudflared:/etc/nginx/cloudflare:ro
     depends_on:
       guacamole:
         condition: service_started
-      cloudflared:
-        condition: service_healthy
-        restart: false
+      # cloudflared:
+      #   condition: service_healthy
+      #   restart: false
     restart: always
-
+    entrypoint: ["/bin/sh", "-c"]
+    command: |
+      "
+        if [ -f /etc/nginx/cloudflare/cloudflare_redirect.conf ]; then
+          cp /etc/nginx/cloudflare/cloudflare_redirect.conf /tmp/cloudflare_redirect.conf
+        else
+          echo > /tmp/cloudflare_redirect.conf
+        fi
+        
+        /docker-entrypoint.sh nginx \"-g\" \"daemon off;\"
+      "
 
   cloudflared:
+    profiles: [ "cloudflared" ] # so it isn't automatically started with docker compose up, but has to be started explicitly
     container_name: cloudflare_${COMPOSE_PROJECT_NAME}
     build:
       context: .
@@ -119,24 +131,22 @@ services:
     entrypoint: ["/bin/sh", "-c"]
     command: |
       "
-        rm -f /data/tunnel_url.txt
-        echo t> /data/tunnel_url.txt
+        rm -f /data/cloudflare_redirect.conf
         rm -f /tmp/output.log
         mkfifo /tmp/output.log
         
         grep -m1 -oE 'https://[a-zA-Z0-9-]+\.trycloudflare\.com' /tmp/output.log | while read URL; do \
-          echo "$$URL" > /data/tunnel_url.txt
+          echo \"return 302 $$URL;\" > /data/cloudflare_redirect.conf
         done &
-        sleep 1 &&
+        sleep 3 &&
         tail -f /tmp/output.log  > /dev/null &
         sleep 1 &&
         cloudflared tunnel --url https://nginx:443 --no-tls-verify 2>&1 | tee /tmp/output.log
 
       "
     healthcheck:
-      test:  grep -m1 -oE 'https://[a-zA-Z0-9-]+\.trycloudflare\.com' /data/tunnel_url.txt && exit 0 || exit 1
-      interval: 1m30s
+      test:  grep -m1 -oE 'https://[a-zA-Z0-9-]+\.trycloudflare\.com' /data/cloudflare_redirect.conf && exit 0 || exit 1
+      interval: 5s
       timeout: 30s
-      retries: 5
+      retries: 10
       start_period: 30s
-    # restart: always
