@@ -1,7 +1,9 @@
 # Guacamole with docker compose
-This is a small documentation how to run a fully working **Apache Guacamole (incubating)** instance with docker (docker compose). The goal of this project is to make it easy to test Guacamole from the internet using [Tailscale Funnel](https://tailscale.com/kb/1223/funnel) while also providing a basic IP allowlist functionality to restrict access to only trusted IP addresses.
+This is a small documentation how to run a fully working **Apache Guacamole (incubating)** instance with docker (docker compose). The goal of this project is to make it easy to test Guacamole from the internet using [Tailscale Funnel](https://tailscale.com/kb/1223/funnel) which is E2E encrypted, because TLS cert from LetsEncrypt is terminated on tailscale node running funnel, or by using [cloudflare tunnel](https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/do-more-with-tunnels/trycloudflare/) (aka argo tunnel, trycloudflare tunnel, quick tunnel, free cloudflare tunnel), which isn't E2E encrypted, because cloudflare does MITM and TLS retermination before the traffic reaches the internet. Cloudflare tunnels were added, because they are more performant nowadays, while tailscale funnel servers become very slow, unsuitable for real time RDP in a browser. Cloudflare tunnels should be considered as a backup option when tailscale funnel performance is not sufficient, but cloudflare tunnels are not E2E encrypted and require trusting cloudflare with your traffic. Additionally, Tailscale funnel, in contrast to cloudflare tunnel, provides a fixed domain name. For this reason, tailscale funnel, even when connection is too slow for RDP, is still used to redirect to the cloudflare tunnel, which has different domain assigned on every start. This makes it possible to have a fixed url for guacamole instance for tailscle funnel and cloudflare tunnel at the same time. First fixed url for tailscale funnel proxy and second fixed url, which redirects to cloudflare tunnel.
 
-> **DO NOT USE THIS REPO for PRODUCTIVE USE!**
+This project also provides a basic IP allowlist functionality to restrict access to only trusted IP addresses. It is implemented in OSI level 7, by reading http header `X-Forwarded-For` in nginx, which is set by tailscale funnel proxy and cloudflare tunnel proxy. This means that exposed service is handling every http request it receives, and traffic not comming from allowlist isn't dropped by kernel or some firewall. This minimises the attack surface, when exposed guacamole instance is discovered to have some zero day vulnerability, or default or weak credentials are used.
+
+> **DO NOT USE THIS REPO for PRODUCTION USE!**
 
 ## About Guacamole
 Apache Guacamole (incubating) is a clientless remote desktop gateway. It supports standard protocols like VNC, RDP, and SSH. It is called clientless because no plugins or client software are required. Thanks to HTML5, once Guacamole is installed on a server, all you need to access your desktops is a web browser.
@@ -29,7 +31,7 @@ cd guacamole-docker-compose
 # Make sure you change it immediately!
 
 ./ip_manage.sh # to manage IP allowlist for Tailscale funnel access and see current config
-./stop.sh # to stop the guacamole server and Tailscale funnel
+./stop.sh # to stop the guacamole server and Tailscale funnel 
 ~~~
 
 Your guacamole server will be available at `https://127.0.0.1:8443/` and also under `https://your-ts-dev-name.your-tailnet-name.ts.net/`. The default username is `guacadmin` with password `guacadmin`.

@@ -97,5 +97,46 @@ services:
       - ./nginx/ssl/self-ssl.key:/etc/nginx/ssl/self-ssl.key:ro
       - ./nginx/allowlist.conf:/etc/nginx/allowlist.conf:ro
     depends_on:
-      - guacamole
+      guacamole:
+        condition: service_started
+      cloudflared:
+        condition: service_healthy
+        restart: false
     restart: always
+
+
+  cloudflared:
+    container_name: cloudflare_${COMPOSE_PROJECT_NAME}
+    build:
+      context: .
+      dockerfile_inline: |
+        FROM alpine:3.23.3
+        COPY --from=cloudflare/cloudflared:2026.2.0 /usr/local/bin/cloudflared /usr/bin/cloudflared
+    image: ${COMPOSE_PROJECT_NAME}/cloudflared_alpine3.23.3:2026.2.0
+    pull_policy: never
+    volumes:
+      - ./cloudflared:/data:rw
+    entrypoint: ["/bin/sh", "-c"]
+    command: |
+      "
+        rm -f /data/tunnel_url.txt
+        echo t> /data/tunnel_url.txt
+        rm -f /tmp/output.log
+        mkfifo /tmp/output.log
+        
+        grep -m1 -oE 'https://[a-zA-Z0-9-]+\.trycloudflare\.com' /tmp/output.log | while read URL; do \
+          echo "$$URL" > /data/tunnel_url.txt
+        done &
+        sleep 1 &&
+        tail -f /tmp/output.log  > /dev/null &
+        sleep 1 &&
+        cloudflared tunnel --url https://nginx:443 --no-tls-verify 2>&1 | tee /tmp/output.log
+
+      "
+    healthcheck:
+      test:  grep -m1 -oE 'https://[a-zA-Z0-9-]+\.trycloudflare\.com' /data/tunnel_url.txt && exit 0 || exit 1
+      interval: 1m30s
+      timeout: 30s
+      retries: 5
+      start_period: 30s
+    # restart: always
