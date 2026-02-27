@@ -56,7 +56,7 @@ services:
 
 
   nginx:
-    container_name: nginx_guacamole_compose
+    container_name: nginx_${COMPOSE_PROJECT_NAME}
     image: nginx:1.29.3-alpine3.22
     ports:
       # Bind to specific IP addresses (network interfaces) instead of all interfaces by default.
@@ -118,7 +118,7 @@ services:
 
   cloudflared:
     profiles: [ "cloudflared" ] # so it isn't automatically started with docker compose up, but has to be started explicitly
-    container_name: cloudflare_${COMPOSE_PROJECT_NAME}
+    container_name: cloudflared_${COMPOSE_PROJECT_NAME}
     build:
       context: .
       dockerfile_inline: |
@@ -128,25 +128,10 @@ services:
     pull_policy: never
     volumes:
       - ./cloudflared:/data:rw
-    entrypoint: ["/bin/sh", "-c"]
-    command: |
-      "
-        rm -f /data/cloudflare_redirect.conf
-        rm -f /tmp/output.log
-        mkfifo /tmp/output.log
-        
-        grep -m1 -oE 'https://[a-zA-Z0-9-]+\.trycloudflare\.com' /tmp/output.log | while read URL; do \
-          echo \"return 302 $$URL;\" > /data/cloudflare_redirect.conf
-        done &
-        sleep 3 &&
-        tail -f /tmp/output.log  > /dev/null &
-        sleep 1 &&
-        cloudflared tunnel --url https://nginx:443 --no-tls-verify 2>&1 | tee /tmp/output.log
-
-      "
+    entrypoint: "/data/startup.sh"
     healthcheck:
       test:  grep -m1 -oE 'https://[a-zA-Z0-9-]+\.trycloudflare\.com' /data/cloudflare_redirect.conf && exit 0 || exit 1
-      interval: 5s
-      timeout: 30s
+      interval: 1s
+      timeout: 3s
       retries: 10
-      start_period: 30s
+      start_period: 0s
