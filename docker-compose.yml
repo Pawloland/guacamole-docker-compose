@@ -24,6 +24,11 @@ services:
     depends_on:
       - postgres
     restart: always
+    healthcheck: # Overwrite defaults from image to update health status faster on startup, but do not change the command for it
+      interval: 1s
+      timeout: 3s
+      retries: 10
+      start_period: 0s
 
 
 
@@ -39,11 +44,13 @@ services:
       RECORDING_SEARCH_PATH: /record
     volumes:
       - ./record:/record:rw
+      - ./guacamole_entrypoint.sh:/custom_entrypoint.sh:ro
     group_add:
       - "1000"
     depends_on:
       - guacd
     restart: always
+    entrypoint: /custom_entrypoint.sh
 
 
 
@@ -93,9 +100,6 @@ services:
     depends_on:
       guacamole:
         condition: service_started
-      # cloudflared:
-      #   condition: service_healthy
-      #   restart: false
     restart: always
     entrypoint: ["/bin/sh", "-c"]
     command: |
