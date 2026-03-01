@@ -7,3 +7,4 @@ record/
 nginx/allowlist.conf
 allowlist_database.txt
 cloudflared/cloudflare_redirect.conf
+nginx/tailscale_funnel_redirect.conf

@@ -27,16 +27,8 @@ services:
 
 
 
-  guacamole_base:
-    container_name: guacamole_base_${COMPOSE_PROJECT_NAME}
-    image: guacamole/guacamole:1.6.0
-
-
-
   guacamole:
     container_name: guacamole_${COMPOSE_PROJECT_NAME}
-    extends:
-      service: guacamole_base
     image: guacamole/guacamole:1.6.0
     environment:
       GUACD_HOSTNAME: guacd
@@ -96,6 +88,7 @@ services:
       - ./nginx/ssl/self.cert:/etc/nginx/ssl/self.cert:ro
       - ./nginx/ssl/self-ssl.key:/etc/nginx/ssl/self-ssl.key:ro
       - ./nginx/allowlist.conf:/etc/nginx/allowlist.conf:ro
+      - ./nginx/tailscale_funnel_redirect.conf:/etc/nginx/tailscale_funnel_redirect.conf:ro
       - ./cloudflared:/etc/nginx/cloudflare:ro
     depends_on:
       guacamole:
@@ -112,8 +105,14 @@ services:
         else
           echo > /tmp/cloudflare_redirect.conf
         fi
+
+        if [ -f /etc/nginx/tailscale_funnel_redirect.conf ]; then
+          cp /etc/nginx/tailscale_funnel_redirect.conf /tmp/tailscale_funnel_redirect.conf
+        else
+          echo > /tmp/tailscale_funnel_redirect.conf
+        fi
         
-        /docker-entrypoint.sh nginx \"-g\" \"daemon off;\"
+        exec /docker-entrypoint.sh nginx \"-g\" \"daemon off;\"
       "
 
   cloudflared:

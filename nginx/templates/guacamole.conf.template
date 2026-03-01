@@ -89,6 +89,14 @@ server {
         return 404;
     }
 
+    # Special redirect endpoint to tailscale funnel (useful to redirect from cloudflare domain back to funnel)
+    location = /tc {
+        include /tmp/tailscale_funnel_redirect.conf;
+
+        # Fallback in case file exists but does not contain a redirect rule
+        return 404;
+    }
+
 
     #error_page 404 /404.html;
 

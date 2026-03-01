@@ -54,6 +54,12 @@ if [[ $ENABLE_CLOUDFLARE -eq 1 && $DISABLE_FUNNEL -eq 0 ]]; then
         exit 1
     fi
 fi
+DNS=""
+if [[ $DISABLE_FUNNEL -eq 0 && $DOCKER_STATUS -eq 0 ]]; then
+    DNS=$(tailscale status --json | jq -r '.Self.DNSName')
+    DNS="${DNS%.}"
+    echo "return 302 https://$DNS;" > "$SCRIPT_DIR/nginx/tailscale_funnel_redirect.conf"
+fi
 
 docker compose -f "$DOCKER_COMPOSE_FILE" up -d
 DOCKER_STATUS=$?
@@ -68,8 +74,6 @@ if [[ $DISABLE_FUNNEL -eq 0 && $DOCKER_STATUS -eq 0 ]]; then
     if [[ $ENABLE_CLOUDFLARE -eq 1 ]]; then
         echo "Cloudflare tunnel is enabled in addition to Tailscale funnel."
         echo "It is accessible under /cf path on the Tailscale Funnell domain:"
-        DNS=$(tailscale status --json | jq -r '.Self.DNSName')
-        DNS="${DNS%.}"
         echo "https://$DNS/cf"
         echo "and will redirect to:"
         cat "$SCRIPT_DIR/cloudflared/cloudflare_redirect.conf" | grep -m1 -oE 'https://[a-zA-Z0-9-]+\.trycloudflare\.com'
