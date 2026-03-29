@@ -46,6 +46,8 @@ fi
 
 
 echo "Starting Docker containers"
+# Create a default empty config, so Docker doesn't try to create a directory at that place to mount it as a volume dir in nginx container
+echo > "$SCRIPT_DIR/nginx/tailscale_funnel_redirect.conf"
 if [[ $ENABLE_CLOUDFLARE -eq 1 && $DISABLE_FUNNEL -eq 0 ]]; then
     echo "Starting cloudflare tunnel container"
     docker compose -f "$DOCKER_COMPOSE_FILE" up cloudflared -d --wait
@@ -73,10 +75,12 @@ if [[ $DISABLE_FUNNEL -eq 0 && $DOCKER_STATUS -eq 0 ]]; then
 
     if [[ $ENABLE_CLOUDFLARE -eq 1 ]]; then
         echo "Cloudflare tunnel is enabled in addition to Tailscale funnel."
-        echo "It is accessible under /cf path on the Tailscale Funnell domain:"
+        echo "It is accessible under /cf path on the Tailscale Funnel domain:"
         echo "https://$DNS/cf"
         echo "and will redirect to:"
         cat "$SCRIPT_DIR/cloudflared/cloudflare_redirect.conf" | grep -m1 -oE 'https://[a-zA-Z0-9-]+\.trycloudflare\.com'
+        echo "There is also a redirect to Taislcale funnel domain on the root path from the Cloudflare domain:"
+        echo "$(cat "$SCRIPT_DIR/cloudflared/cloudflare_redirect.conf" | grep -m1 -oE 'https://[a-zA-Z0-9-]+\.trycloudflare\.com')/tc"
     fi
 
 fi
