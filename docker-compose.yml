@@ -3,7 +3,7 @@ name: guacamole_compose
 services:
   postgres:
     container_name: postgres_${COMPOSE_PROJECT_NAME}
-    image: postgres:18.0-alpine3.22
+    image: postgres:18.4-alpine3.23
     environment:
       POSTGRES_DB: guacamole_db
       POSTGRES_PASSWORD: 'ChooseYourOwnPasswordHere1234'
@@ -56,7 +56,7 @@ services:
 
   nginx:
     container_name: nginx_${COMPOSE_PROJECT_NAME}
-    image: nginx:1.29.3-alpine3.22
+    image: nginx:1.31.1-alpine3.23
     ports:
       # Bind to specific IP addresses (network interfaces) instead of all interfaces by default.
       # Binding to 0.0.0.0 by default can be risky because we can't ensure that all interfaces
@@ -125,9 +125,9 @@ services:
     build:
       context: .
       dockerfile_inline: |
-        FROM alpine:3.23.3
-        COPY --from=cloudflare/cloudflared:2026.2.0 /usr/local/bin/cloudflared /usr/bin/cloudflared
-    image: ${COMPOSE_PROJECT_NAME}/cloudflared_alpine3.23.3:2026.2.0
+        FROM alpine:3.23.4
+        COPY --from=cloudflare/cloudflared:2026.5.1 /usr/local/bin/cloudflared /usr/bin/cloudflared
+    image: ${COMPOSE_PROJECT_NAME}/cloudflared_alpine3.23.4:2026.5.1
     pull_policy: never
     volumes:
       - ./cloudflared:/data:rw
