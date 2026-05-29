@@ -46,6 +46,8 @@ fi
 
 
 echo "Starting Docker containers"
+# delete folder which can be created when docker starts automatically after unexpected power cycle of docker host and tries to recreate the volumes automatically I think
+rm -rf "$SCRIPT_DIR/nginx/tailscale_funnel_redirect.conf"
 # Create a default empty config, so Docker doesn't try to create a directory at that place to mount it as a volume dir in nginx container
 echo > "$SCRIPT_DIR/nginx/tailscale_funnel_redirect.conf"
 if [[ $ENABLE_CLOUDFLARE -eq 1 && $DISABLE_FUNNEL -eq 0 ]]; then

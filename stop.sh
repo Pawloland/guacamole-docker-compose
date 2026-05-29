@@ -10,5 +10,5 @@ echo "done"
 echo "Stopping Docker containers"
 docker compose -f "$DOCKER_COMPOSE_FILE" stop cloudflared
 docker compose -f "$DOCKER_COMPOSE_FILE" stop
-rm -f "$SCRIPT_DIR/nginx/tailscale_funnel_redirect.conf"
+rm -rf "$SCRIPT_DIR/nginx/tailscale_funnel_redirect.conf"
 echo "done"

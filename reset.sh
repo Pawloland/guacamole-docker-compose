@@ -26,7 +26,8 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then # do dangerous stuff
         "$SCRIPT_DIR/record/" \
         "$SCRIPT_DIR/nginx/ssl/" \
         "$SCRIPT_DIR/allowlist_database.txt" \
-        "$SCRIPT_DIR/nginx/allowlist.conf"
+        "$SCRIPT_DIR/nginx/allowlist.conf" \
+        "$SCRIPT_DIR/nginx/tailscale_funnel_redirect.conf"
     echo "All done."
 else
     echo "Aborted. No resets were made."
